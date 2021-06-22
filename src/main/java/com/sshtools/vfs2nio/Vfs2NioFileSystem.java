@@ -1,5 +1,5 @@
 /**
- * Copyright © 2018 - 2018 SSHTOOLS Limited (support@sshtools.com)
+ * Copyright © 2018 - 2021 SSHTOOLS Limited (support@sshtools.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,10 @@ public class Vfs2NioFileSystem extends BaseFileSystem<Vfs2NioPath, Vfs2NioFileSy
 	public Vfs2NioFileAttributes getFileAttributes(Vfs2NioPath path) {
 		return new Vfs2NioFileAttributes(pathToFileObject(path));
 	}
+	
+	public URI getUri() {
+		return uri;
+	}
 
 	public FileObject getRoot() {
 		return root;
@@ -90,10 +94,30 @@ public class Vfs2NioFileSystem extends BaseFileSystem<Vfs2NioPath, Vfs2NioFileSy
 			return true;
 		}
 	}
+	
+	
+	public static String[] getPathSegments(Path path) {
+		int n = path.getNameCount();
+		
+		String[] result = new String[n];
+		
+		// The iterator is expected to yield n items
+		Iterator<Path> it = path.iterator();
+		for (int i = 0; i < n; ++i) {
+			String segment = it.next().toString();
+			result[i] = segment;
+		}
+		return result;
+	}
+
 
 	public Iterator<Path> iterator(Path path, Filter<? super Path> filter) throws IOException {
 		FileObject obj = pathToFileObject(Vfs2NioFileSystemProvider.toVFSPath(path));
 		FileObject[] children = obj.getChildren();
+		
+		String[] baseNames = getPathSegments(path);
+		int childNameIdx = baseNames.length;
+
 		return new Iterator<Path>() {
 			int index;
 
@@ -105,9 +129,16 @@ public class Vfs2NioFileSystem extends BaseFileSystem<Vfs2NioPath, Vfs2NioFileSy
 			@Override
 			public Path next() {
 				Path croot = path.getRoot();
-				Path f = path.getFileName();
-				return new Vfs2NioPath(Vfs2NioFileSystem.this, croot.toString(),
-						(f == null ? "" : f.toString() + "/") + children[index++].getName().getBaseName().toString());
+//				Broken code:
+//				Path f = path.getFileName();
+//				return new Vfs2NioPath(Vfs2NioFileSystem.this, croot.toString(),
+//						(f == null ? "" : f.toString() + "/") + children[index++].getName().getBaseName().toString());
+
+				String[] childNames = Arrays.copyOf(baseNames, childNameIdx + 1);
+				childNames[childNameIdx] = children[index].getName().getBaseName().toString();
+				++index;
+				
+				return new Vfs2NioPath(Vfs2NioFileSystem.this, croot.toString(), childNames);
 			}
 		};
 	}

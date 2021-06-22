@@ -21,6 +21,7 @@ package org.apache.nio;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.ProviderMismatchException;
@@ -37,6 +38,9 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+
+import com.sshtools.vfs2nio.Vfs2NioFileSystem;
 
 public abstract class BasePath<T extends BasePath<T, FS, P>, FS extends BaseFileSystem<T, P>, P extends FileSystemProvider> implements Path {
 
@@ -329,8 +333,16 @@ public abstract class BasePath<T extends BasePath<T, FS, P>, FS extends BaseFile
 
     @Override
     public URI toUri() {
-        File file = toFile();
-        return file.toURI();
+    	URI fsUri = ((Vfs2NioFileSystem)getFileSystem()).getUri();
+    	
+    	String str = fsUri + "/" + names.stream().collect(Collectors.joining("/"));
+    	try {
+			return new URI(str);
+		} catch (URISyntaxException e) {
+			throw new RuntimeException(e);
+		}
+        // File file = toFile();
+        // return file.toURI();
     }
 
     @SuppressWarnings("unchecked")
