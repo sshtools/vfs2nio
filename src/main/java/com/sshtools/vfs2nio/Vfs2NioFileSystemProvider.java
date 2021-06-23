@@ -1,5 +1,5 @@
 /**
- * Copyright © 2018 - 2018 SSHTOOLS Limited (support@sshtools.com)
+ * Copyright © 2018 - 2021 SSHTOOLS Limited (support@sshtools.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,9 @@ import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
+import org.apache.commons.vfs2.RandomAccessContent;
 import org.apache.commons.vfs2.VFS;
+import org.apache.commons.vfs2.util.RandomAccessMode;
 
 public class Vfs2NioFileSystemProvider extends FileSystemProvider {
 	public final static String FILE_SYSTEM_OPTIONS = "com.sshtools.vfs2nio.fileSystemOptions";
@@ -79,6 +81,11 @@ public class Vfs2NioFileSystemProvider extends FileSystemProvider {
 	public void checkAccess(Path path, AccessMode... modes) throws IOException {
 		Vfs2NioPath p = toVFSPath(path);
 		FileObject fo = p.toFileObject();
+
+		if (modes.length == 0) {
+			modes = new AccessMode[] { AccessMode.READ };
+		}
+
 		for (AccessMode m : modes) {
 			switch (m) {
 			case EXECUTE:
@@ -206,8 +213,15 @@ public class Vfs2NioFileSystemProvider extends FileSystemProvider {
 
 	@Override
 	public FileChannel newFileChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
-		// TODO
-		throw new UnsupportedOperationException();
+		RandomAccessMode accessMode = options.contains(StandardOpenOption.WRITE)
+				? RandomAccessMode.READWRITE
+				: RandomAccessMode.READ;
+
+		Vfs2NioPath vfsPath = toVFSPath(path);
+		FileObject fileObject = vfsPath.toFileObject();
+		RandomAccessContent content = fileObject.getContent().getRandomAccessContent(accessMode);
+
+		return new FileChannelFromSeekableByteChannelImpl(new Vfs2NioSeekableByteChannel(content));
 	}
 
 	@Override
