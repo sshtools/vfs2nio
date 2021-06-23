@@ -35,7 +35,7 @@ public class Vfs2NioSeekableByteChannel
 	public Vfs2NioSeekableByteChannel(RandomAccessContent content) {
 		this(content, true);
 	}
-	
+
 	public Vfs2NioSeekableByteChannel(RandomAccessContent content, boolean isOpen) {
 		super();
 		this.content = content;

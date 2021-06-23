@@ -81,11 +81,11 @@ public class Vfs2NioFileSystemProvider extends FileSystemProvider {
 	public void checkAccess(Path path, AccessMode... modes) throws IOException {
 		Vfs2NioPath p = toVFSPath(path);
 		FileObject fo = p.toFileObject();
-		
+
 		if (modes.length == 0) {
 			modes = new AccessMode[] { AccessMode.READ };
 		}
-		
+
 		for (AccessMode m : modes) {
 			switch (m) {
 			case EXECUTE:
@@ -222,7 +222,6 @@ public class Vfs2NioFileSystemProvider extends FileSystemProvider {
 		RandomAccessContent content = fileObject.getContent().getRandomAccessContent(accessMode);
 
 		return new FileChannelFromSeekableByteChannelImpl(new Vfs2NioSeekableByteChannel(content));
-		// return new Vfs2NioFileChannel(vfsPath, accessMode);
 	}
 
 	@Override

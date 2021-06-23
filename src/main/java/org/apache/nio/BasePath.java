@@ -333,16 +333,14 @@ public abstract class BasePath<T extends BasePath<T, FS, P>, FS extends BaseFile
 
     @Override
     public URI toUri() {
-    	URI fsUri = ((Vfs2NioFileSystem)getFileSystem()).getUri();
-    	
-    	String str = fsUri + "/" + names.stream().collect(Collectors.joining("/"));
-    	try {
-			return new URI(str);
-		} catch (URISyntaxException e) {
-			throw new RuntimeException(e);
-		}
-        // File file = toFile();
-        // return file.toURI();
+        URI fsUri = ((Vfs2NioFileSystem)getFileSystem()).getUri();
+
+        String str = fsUri + "/" + names.stream().collect(Collectors.joining("/"));
+        try {
+            return new URI(str);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @SuppressWarnings("unchecked")

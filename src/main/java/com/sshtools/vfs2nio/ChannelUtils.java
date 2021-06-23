@@ -22,139 +22,139 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.channels.WritableByteChannel;
 
 public class ChannelUtils {
-	
-	/** Method akin to Apache IOUtils.readFully without sanity checking */
-	public static int readFully(ReadableByteChannel src, ByteBuffer dst) throws IOException {
-		int count = 0;
-		while (dst.remaining() > 0) {
-			int n = src.read(dst);
-			if (n < 0) {
-				break;
-			} else {
-				count += n;
-			}
-		}
 
-		return count;
-	}
+    /** Method akin to Apache IOUtils.readFully without sanity checking */
+    public static int readFully(ReadableByteChannel src, ByteBuffer dst) throws IOException {
+        int count = 0;
+        while (dst.remaining() > 0) {
+            int n = src.read(dst);
+            if (n < 0) {
+                break;
+            } else {
+                count += n;
+            }
+        }
 
-	public static int writeFully(WritableByteChannel tgt, ByteBuffer buffer) throws IOException {
-		int result = 0;
-		while (buffer.remaining() > 0) {
-			result += tgt.write(buffer);
-		}
-		return result;
-	}
+        return count;
+    }
 
-	public static int read(SeekableByteChannel src, ByteBuffer dst, long position) throws IOException {
-		long posBackup = src.position();
-		src.position(position);
+    public static int writeFully(WritableByteChannel tgt, ByteBuffer buffer) throws IOException {
+        int result = 0;
+        while (buffer.remaining() > 0) {
+            result += tgt.write(buffer);
+        }
+        return result;
+    }
 
-		int result = src.read(dst);
-		src.position(posBackup);
-		return result;
-	}
+    public static int read(SeekableByteChannel src, ByteBuffer dst, long position) throws IOException {
+        long posBackup = src.position();
+        src.position(position);
 
-	public static int write(SeekableByteChannel dst, ByteBuffer src, long position) throws IOException {
-		long posBackup = dst.position();
-		dst.position(position);
+        int result = src.read(dst);
+        src.position(posBackup);
+        return result;
+    }
 
-		int result = dst.write(src);
-		dst.position(posBackup);
-		return result;
-	}
-	
-	public static long transferTo(
-			SeekableByteChannel src,
-			long position,
-			long count,
-			WritableByteChannel
-			target,
-			int blockSize) throws IOException {
-		long posBackup = src.position();
+    public static int write(SeekableByteChannel dst, ByteBuffer src, long position) throws IOException {
+        long posBackup = dst.position();
+        dst.position(position);
 
-		src.position(position);
+        int result = dst.write(src);
+        dst.position(posBackup);
+        return result;
+    }
 
-		ByteBuffer buffer = ByteBuffer.allocate(blockSize);
-		long done = 0;
-		long remaining;
-		while ((remaining = count - done) > 0) {
-			buffer.position(0);
+    public static long transferTo(
+            SeekableByteChannel src,
+            long position,
+            long count,
+            WritableByteChannel
+            target,
+            int blockSize) throws IOException {
+        long posBackup = src.position();
 
-			int limit = remaining > blockSize ? blockSize : (int)remaining;
-			buffer.limit(limit);
+        src.position(position);
 
-			int n = readFully(src, buffer);
-			if (n == 0) {
-				break;
-			} else {
-				done += n;
-			}
+        ByteBuffer buffer = ByteBuffer.allocate(blockSize);
+        long done = 0;
+        long remaining;
+        while ((remaining = count - done) > 0) {
+            buffer.position(0);
 
-			buffer.position(0);
-			buffer.limit(n);
-			writeFully(target, buffer);
-		}
-		
-		src.position(posBackup);
-		
-		return done;
-	}
-	
-	public static long transferFrom(SeekableByteChannel dst, ReadableByteChannel src, long position, long count, int blockSize) throws IOException {
-		ByteBuffer buffer = ByteBuffer.allocate(blockSize);
+            int limit = remaining > blockSize ? blockSize : (int)remaining;
+            buffer.limit(limit);
 
-		long posBackup = dst.position();
-		dst.position(position);
+            int n = readFully(src, buffer);
+            if (n == 0) {
+                break;
+            } else {
+                done += n;
+            }
 
-		long done = 0;
-		long remaining;
-		while ((remaining = count - done) > 0) {
-			buffer.position(0);
-			
-			int limit = remaining > blockSize ? blockSize : (int)remaining;
-			buffer.limit(limit);
+            buffer.position(0);
+            buffer.limit(n);
+            writeFully(target, buffer);
+        }
 
-			int contentSize = readFully(src, buffer);
-			if (contentSize == 0) {
-				break;
-			}
-			done += contentSize;
-			
-			buffer.position(0);
-			buffer.limit(contentSize);
-			writeFully(dst, buffer);
-		}
+        src.position(posBackup);
 
-		dst.position(posBackup);
+        return done;
+    }
 
-		return done;
-	}
+    public static long transferFrom(SeekableByteChannel dst, ReadableByteChannel src, long position, long count, int blockSize) throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(blockSize);
 
-	public static long readScattered(ReadableByteChannel src, ByteBuffer[] dsts, int offset, int length) throws IOException {
-		long result = 0;
-		for (int i = offset; i < length; ++i) {
-			ByteBuffer dst = dsts[i];			
-			int n = readFully(src, dst);
-			if (n == 0) {
-				break;
-			}
-			result += n;
-		}
-		return result;
-	}
+        long posBackup = dst.position();
+        dst.position(position);
 
-	public static long writeScattered(WritableByteChannel dst, ByteBuffer[] srcs, int offset, int length) throws IOException {
-		long result = 0;
-		for (int i = offset; i < length; ++i) {
-			ByteBuffer src = srcs[i];			
-			int n = writeFully(dst, src);
-			if (n == 0) {
-				break;
-			}
-			result += n;
-		}
-		return result;
-	}
+        long done = 0;
+        long remaining;
+        while ((remaining = count - done) > 0) {
+            buffer.position(0);
+
+            int limit = remaining > blockSize ? blockSize : (int)remaining;
+            buffer.limit(limit);
+
+            int contentSize = readFully(src, buffer);
+            if (contentSize == 0) {
+                break;
+            }
+            done += contentSize;
+
+            buffer.position(0);
+            buffer.limit(contentSize);
+            writeFully(dst, buffer);
+        }
+
+        dst.position(posBackup);
+
+        return done;
+    }
+
+    public static long readScattered(ReadableByteChannel src, ByteBuffer[] dsts, int offset, int length) throws IOException {
+        long result = 0;
+        for (int i = offset; i < length; ++i) {
+            ByteBuffer dst = dsts[i];
+            int n = readFully(src, dst);
+            if (n == 0) {
+                break;
+            }
+            result += n;
+        }
+        return result;
+    }
+
+    public static long writeScattered(WritableByteChannel dst, ByteBuffer[] srcs, int offset, int length) throws IOException {
+        long result = 0;
+        for (int i = offset; i < length; ++i) {
+            ByteBuffer src = srcs[i];
+            int n = writeFully(dst, src);
+            if (n == 0) {
+                break;
+            }
+            result += n;
+        }
+        return result;
+    }
 
 }
