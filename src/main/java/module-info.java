@@ -13,26 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.sshtools.vfs2nio;
+import java.nio.file.spi.FileSystemProvider;
 
-@SuppressWarnings("serial")
-public class Vfs2NioException extends RuntimeException {
-	public Vfs2NioException() {
-	}
+import com.sshtools.vfs2nio.Vfs2NioFileSystemProvider;
 
-	public Vfs2NioException(String message) {
-		super(message);
-	}
-
-	public Vfs2NioException(String message, Throwable cause) {
-		super(message, cause);
-	}
-
-	public Vfs2NioException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-	}
-
-	public Vfs2NioException(Throwable cause) {
-		super(cause);
-	}
+module com.sshtools.vfs2nio {
+    requires transitive commons.vfs2;
+    /* requires static jsch; */
+    requires transitive com.sshtools.sshapi.commonsvfs;
+    requires transitive com.sshtools.sshapi.core;
+    requires static org.apache.commons.compress;
+    provides FileSystemProvider with Vfs2NioFileSystemProvider;
+    exports com.sshtools.vfs2nio;
+    exports org.apache.nio;
+    
 }

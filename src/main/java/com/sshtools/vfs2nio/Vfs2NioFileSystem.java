@@ -1,5 +1,5 @@
-/**
- * Copyright © 2018 - 2018 SSHTOOLS Limited (support@sshtools.com)
+/*
+ * Copyright © 2018 - 2022 SSHTOOLS Limited (support@sshtools.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,18 @@ public class Vfs2NioFileSystem extends BaseFileSystem<Vfs2NioPath, Vfs2NioFileSy
 		return new Vfs2NioFileAttributes(pathToFileObject(path));
 	}
 
-	public FileObject getRoot() {
+	@Override
+    public Iterable<Path> getRootDirectories() {
+	    if(uri.getPath() == null)
+	        return super.getRootDirectories();
+	    else {
+            var uriPath = uri.getPath();
+            var fsRoot = getPath(uriPath);
+            return Collections.<Path>singleton(fsRoot);
+	    }
+    }
+
+    public FileObject getRoot() {
 		return root;
 	}
 
@@ -92,8 +103,8 @@ public class Vfs2NioFileSystem extends BaseFileSystem<Vfs2NioPath, Vfs2NioFileSy
 	}
 
 	public Iterator<Path> iterator(Path path, Filter<? super Path> filter) throws IOException {
-		FileObject obj = pathToFileObject(Vfs2NioFileSystemProvider.toVFSPath(path));
-		FileObject[] children = obj.getChildren();
+		var obj = pathToFileObject(Vfs2NioFileSystemProvider.toVFSPath(path));
+		var children = obj.getChildren();
 		return new Iterator<Path>() {
 			int index;
 
@@ -104,10 +115,12 @@ public class Vfs2NioFileSystem extends BaseFileSystem<Vfs2NioPath, Vfs2NioFileSy
 
 			@Override
 			public Path next() {
-				Path croot = path.getRoot();
-				Path f = path.getFileName();
-				return new Vfs2NioPath(Vfs2NioFileSystem.this, croot.toString(),
-						(f == null ? "" : f.toString() + "/") + children[index++].getName().getBaseName().toString());
+//				var croot = path.getRoot();
+//				var f = path.getFileName();
+//				return new Vfs2NioPath(Vfs2NioFileSystem.this, croot.toString(),
+//						(f == null ? "" : f.toString() + "/") + children[index++].getName().getBaseName().toString());
+			    
+			    return new Vfs2NioPath(Vfs2NioFileSystem.this, null, children[index++].getName().getPath());
 			}
 		};
 	}
@@ -115,7 +128,7 @@ public class Vfs2NioFileSystem extends BaseFileSystem<Vfs2NioPath, Vfs2NioFileSy
 	public void setTimes(Vfs2NioPath path, FileTime mtime, FileTime atime, FileTime ctime) {
 		if (atime != null || ctime != null)
 			throw new UnsupportedOperationException();
-		FileObject object = pathToFileObject(path);
+		var object = pathToFileObject(path);
 		try {
 			object.getContent().setLastModifiedTime(mtime.toMillis());
 		} catch (FileSystemException e) {

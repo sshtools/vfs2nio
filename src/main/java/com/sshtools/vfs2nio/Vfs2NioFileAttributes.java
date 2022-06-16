@@ -1,5 +1,5 @@
-/**
- * Copyright © 2018 - 2018 SSHTOOLS Limited (support@sshtools.com)
+/*
+ * Copyright © 2018 - 2022 SSHTOOLS Limited (support@sshtools.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ public class Vfs2NioFileAttributes implements BasicFileAttributes {
 
 	@Override
 	public Object fileKey() {
-		return null;
+		return e;
 	}
 
 	@Override
@@ -108,7 +108,11 @@ public class Vfs2NioFileAttributes implements BasicFileAttributes {
 
 	@Override
 	public boolean isSymbolicLink() {
-		return false;
+		try {
+            return e.isSymbolicLink();
+        } catch (FileSystemException e) {
+            throw new IllegalStateException("Could not determine if symbolic link.");
+        }
 	}
 
 	@Override

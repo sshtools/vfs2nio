@@ -1,5 +1,5 @@
-/**
- * Copyright © 2018 - 2018 SSHTOOLS Limited (support@sshtools.com)
+/*
+ * Copyright © 2018 - 2022 SSHTOOLS Limited (support@sshtools.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,10 @@ package com.sshtools.vfs2nio;
 
 import java.io.IOException;
 import java.nio.file.FileStore;
-import java.nio.file.FileSystem;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
-import java.nio.file.spi.FileSystemProvider;
 import java.util.Map;
 
 import org.apache.commons.vfs2.FileObject;
@@ -45,9 +43,9 @@ public class Vfs2NioPath extends BasePath<Vfs2NioPath, Vfs2NioFileSystem, Vfs2Ni
 	@Override
 	public Path toRealPath(LinkOption... options) throws IOException {
 		// TODO: handle links
-		Vfs2NioPath absolute = toAbsolutePath();
-		FileSystem fs = getFileSystem();
-		FileSystemProvider provider = fs.provider();
+		var absolute = toAbsolutePath();
+		var fs = getFileSystem();
+		var provider = fs.provider();
 		provider.checkAccess(absolute);
 		return absolute;
 	}
@@ -57,7 +55,7 @@ public class Vfs2NioPath extends BasePath<Vfs2NioPath, Vfs2NioFileSystem, Vfs2Ni
 	}
 
 	Vfs2NioFileAttributes getAttributes() throws IOException {
-		Vfs2NioFileAttributes zfas = getFileSystem().getFileAttributes(normalize());
+		var zfas = getFileSystem().getFileAttributes(normalize());
 		if (zfas == null)
 			throw new NoSuchFileException(toString());
 		return zfas;
@@ -81,7 +79,7 @@ public class Vfs2NioPath extends BasePath<Vfs2NioPath, Vfs2NioFileSystem, Vfs2Ni
 			view = attributes.substring(0, colonPos++);
 			attrs = attributes.substring(colonPos);
 		}
-		Vfs2NioFileAttributeView zfv = Vfs2NioFileAttributeView.get(this, view);
+		var zfv = Vfs2NioFileAttributeView.get(this, view);
 		if (zfv == null) {
 			throw new UnsupportedOperationException("view not supported");
 		}
@@ -99,7 +97,7 @@ public class Vfs2NioPath extends BasePath<Vfs2NioPath, Vfs2NioFileSystem, Vfs2Ni
 			type = attribute.substring(0, colonPos++);
 			attr = attribute.substring(colonPos);
 		}
-		Vfs2NioFileAttributeView view = Vfs2NioFileAttributeView.get(this, type);
+		var view = Vfs2NioFileAttributeView.get(this, type);
 		if (view == null)
 			throw new UnsupportedOperationException("view <" + view + "> is not supported");
 		view.setAttribute(attr, value);

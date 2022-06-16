@@ -50,7 +50,7 @@ This library is provided on Maven Central, so if you are using Maven, all you ne
 		<dependency>
 			<groupId>com.sshtools</groupId>
 			<artifactId>vfs2nio</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.9.0-SNAPSHOT-SNAPSHOT</version>
 		</dependency>
 	...
 ```
@@ -71,7 +71,7 @@ To get access to the officially supported Commons VFS providers, you may need to
 		<dependency>
 			<groupId>com.sshtools</groupId>
 			<artifactId>vfs2nio</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+           <version>0.9.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
     		<groupId>org.apache.commons</groupId>
@@ -93,7 +93,7 @@ the SSHTools VFS libraries :-
 		<dependency>
 			<groupId>com.sshtools</groupId>
 			<artifactId>vfs2nio</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.9.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.sshtools</groupId>
@@ -111,7 +111,7 @@ is probably a good idea to add an exclusion (note, this isn't strictly required 
 		<dependency>
 			<groupId>com.sshtools</groupId>
 			<artifactId>vfs2nio</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+           <version>0.9.0-SNAPSHOT</version>
 			<exclusions>
 		        <exclusion>
 				    <groupId>com.jcraft</groupId>
@@ -131,43 +131,154 @@ is probably a good idea to add an exclusion (note, this isn't strictly required 
 		</dependency>
 ```
 
-With this added, you would get support for a URI in the format `vfs:sftp://user@host/path`. 
-
+With this added, you would get support for a URI in the format `vfs:sftp://user:password@host/path`. 
 
  
-##Example 1 - List Directory
+##Example 1 - Create A Directory
 
-The following would list all of the root directories on an SFTP server (if you have SFTP provider installed) :-
+Create a new directory at the root of the file system.
+
+```
+        try (var fs = FileSystems.newFileSystem(URI.create(vfsUri), opts)) {
+            Files.createDirectory(fs.getPath("mydir1"));
+        }
+```
+ 
+##Example 2 - List Directory
+
+The following would list all of the root directories on an SFTP server (if you have SFTP provider installed).
  
 ```
-/* The actual Commons VFS URI to access */  
-String vfsUri = "sftp://myuser@myserver/";
-
-for(Path p : FileSystems.newFileSystem(
-			URI.create("vfs:" + vfsUri), 
-			new HashMap<String, ?>()).getRootDirectories()) {
-	System.out.println(p);
-	try(DirectoryStream<Path> d = Files.newDirectoryStream(p)) {
-		for(Path dp : d) {
-			System.out.println("  " + dp);	
-		}
-	}
+try (var fs = FileSystems.newFileSystem(URI.create("vfs:sftp://myuser:mypassword@myserver/"), new HashMap<>())) {
+    for (var root : fs.getRootDirectories()) {
+        System.out.println(root);
+        try (var dir = Files.newDirectoryStream(root)) {
+            for (var path : dir) {
+                System.out.println("  " + path);
+            }
+        }
+    }
 }
 ```
 
-##TODO Example 2 - Reading Files
+##Example 3 - Writing Files
 
-##TODO Example 3 - Deleting Files
+The following will create a file in the root of the VFS URI and fill it with some content.
+ 
+```
+try (var fs = FileSystems.newFileSystem(URI.create("vfs:sftp://myuser:mypassword@myserver/"), new HashMap<>())) {
+    try (var out = Files.newBufferedWriter(fs.getPath("myfile.txt"))) {
+        var wrt = new PrintWriter(out, true);
+        wrt.println("My test content");
+        wrt.println("Another line");
+        wrt.println("The end");
+    }
+}
+```
 
-##TODO Example 4 - Renaming Files
+##Example 4 - Reading Files
 
-##TODO Example 5 - Copying Files
+The following will reads the file created in the previous example and displays it back to `sysout`.
+ 
+```
+try (var fs = FileSystems.newFileSystem(URI.create("vfs:sftp://myuser:mypassword@myserver/"), new HashMap<>())) {
+    try (var in = Files.newBufferedReader(fs.getPath("myfile.txt"))) {
+        String line;
+        while( ( line = in.readLine() ) != null) {
+            System.out.println(line);
+        }
+    }
+}
+```
+
+##Example 5 - Copying Files
+
+The following will copy the file created in Example 2 to another file.
+ 
+```
+try (var fs = FileSystems.newFileSystem(URI.create("vfs:sftp://myuser:mypassword@myserver/"), new HashMap<>())) {
+    Files.copy(fs.getPath("myfile.txt"), fs.getPath("myfilecopy.txt"));
+}
+```
 
 ##TODO Example 6 - File Attributes
 
-##TODO Authentication
+##TODO Example 7 - File Attributes
 
-##TODO Passing FileSystemOptions
+##TODO Example 8- Deleting Files
 
-##TODO Custom FileManager
+##TODO Example 9 - Renaming Files
 
+## Authentication
+
+There are 3 different techniques that may be used if the virtual file system requires authentication.
+
+If the username is not supplied, the system property `user.name` will be queried for the default. If the password is not supplied, is will be interactively asked for in the `Console`, if the `Console` is available. 
+
+### 1. Encoding The User Information And Password In The URI
+
+The username and password are provided as URL encoded text into the URI itself when you create the file system. The syntax is ..
+
+```
+vfs:<vfsScheme>://<username>[:<password>]/.......
+```
+
+Both the username and password must be [URL encoded](https://en.wikipedia.org/wiki/Percent-encoding). 
+
+The `<username>` may further encode the *Domain Name* (if the underlying VFS requires it). In this case, the syntax of `<username>` is ..
+
+```
+    <username>[@<domain>]
+```
+
+.. or ..
+
+```
+    [<domain>\]<username>
+```
+
+### 2. Providing User Information As File System Options 
+
+
+
+```
+    var opts = new HashMap<String, Object>();
+    opts.put(Vfs2NioFileSystemProvider.DOMAIN, "mycompany"); // Optional
+    opts.put(Vfs2NioFileSystemProvider.USERNAME, "myuser"); // Defaults to user.name
+    opts.put(Vfs2NioFileSystemProvider.PASSWORD, "mypassword"); // May be a String or char[] 
+    var fs = FileSystems.newFileSystem(URI.create("vfs:sftp://myserver/"), opts);
+```
+
+
+### 3. Providing A org.apache.commons.vfs2.UserAuthenticator
+
+Commons VFS's native authentication mechanism is the `UserAuthenticator`. You may provide a class that implements this interface, and pass that to a NIO.2 file system via the `HashMap` argument of `FileSystems.newFileSystem()`. The option should have a key of `com.sshtools.vfs2nio.vfsAuthenticator` (or the constant  `Vfs2NioFileSystemProvider.AUTHENTICATOR`) and the value should be an instance of a `UserAuthenticator`. See the [Commons VFS documentation](https://commons.apache.org/proper/commons-vfs/api.html) for further information.
+
+In this case, the root URI's user information is ignored, as are the other file system options described in Example 2 above. 
+
+Use this technique if you want to interactively provide authentication details, e.g. in a GUI.
+
+```
+    var opts = new HashMap<String, Object>();
+    opts.put(Vfs2NioFileSystemProvider.AUTHENTICATOR, myAuthenticatorInstance); 
+    var fs = FileSystems.newFileSystem(URI.create("vfs:sftp://myserver/"), opts);
+```
+
+## FileSystemOptions
+
+Commons VFS uses `FileSystemOptions` to configure scheme specific options for the various file systems.
+Pass an instance of this class as a file system option with the key `com.sshtools.vfs2nio.fileSystemOptions` (or use the constant `Vfs2NioFileSystemProvider.FILE_SYSTEM_OPTIONS`).
+
+For example, to configure use of private key for authentication with an SFTP file system.
+
+```
+    var opts = new HashMap<String, Object>();
+    var fsOpts = new FileSystemOptions();
+    SftpFileSystemConfigBuilder.getInstance().setIdentities(fsOptions, new File[] { new File("/path/to/private/key"); });
+    opts.put(Vfs2NioFileSystemProvider.FILE_SYSTEM_OPTIONS, fsOpts)
+    var fs = FileSystems.newFileSystem(URI.create("vfs:sftp://myserver/"), opts);
+```
+
+## FileSystemManager
+
+It is also possible to extend Commons VFS's `FileSystemManager` for your needs, and pass this as a file system option. Pass an instance of this class as a file system option with the key `com.sshtools.vfs2nio.vfsManager` (or use the constant `Vfs2NioFileSystemProvider.VFS_MANAGER`).

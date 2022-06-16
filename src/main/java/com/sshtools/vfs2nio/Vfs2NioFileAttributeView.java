@@ -1,5 +1,5 @@
-/**
- * Copyright © 2018 - 2018 SSHTOOLS Limited (support@sshtools.com)
+/*
+ * Copyright © 2018 - 2022 SSHTOOLS Limited (support@sshtools.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,10 +111,10 @@ public class Vfs2NioFileAttributeView implements BasicFileAttributeView {
 	}
 
 	Map<String, Object> readAttributes(String attributes) throws IOException {
-		Vfs2NioFileAttributes zfas = readAttributes();
+		var zfas = readAttributes();
 		LinkedHashMap<String, Object> map = new LinkedHashMap<>();
 		if ("*".equals(attributes)) {
-			for (Attribute id : Attribute.values()) {
+			for (var id : Attribute.values()) {
 				try {
 					map.put(id.name(), attribute(id, zfas));
 				} catch (IllegalArgumentException x) {
@@ -122,7 +122,7 @@ public class Vfs2NioFileAttributeView implements BasicFileAttributeView {
 			}
 		} else {
 			String[] as = attributes.split(",");
-			for (String a : as) {
+			for (var a : as) {
 				try {
 					map.put(a, attribute(Attribute.valueOf(a), zfas));
 				} catch (IllegalArgumentException x) {
